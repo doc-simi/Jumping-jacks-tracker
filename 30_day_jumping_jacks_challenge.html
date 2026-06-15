@@ -1,0 +1,508 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>30-Day Jumping Jacks Challenge</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+      :root {
+        --card: #ffffff;
+        --text: #222;
+        --muted: #666;
+        --accent: #ff7a59;
+        --accent-dark: #e85f3e;
+        --gold: #f4b400;
+        --border: #e4ded6;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Arial, sans-serif;
+        background: linear-gradient(135deg, #fff7ef, #f3f7ff);
+        color: var(--text);
+        padding: 24px;
+      }
+
+      .container {
+        max-width: 1200px;
+        margin: auto;
+      }
+
+      header {
+        text-align: center;
+        margin-bottom: 28px;
+      }
+
+      h1 {
+        margin-bottom: 8px;
+        font-size: 2.2rem;
+      }
+
+      .subtitle {
+        color: var(--muted);
+        margin: 0;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        margin-bottom: 20px;
+      }
+
+      .card {
+        background: var(--card);
+        border: 1px solid var(--border);
+        border-radius: 18px;
+        padding: 18px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+      }
+
+      .stat {
+        font-size: 1.8rem;
+        font-weight: bold;
+        color: var(--accent-dark);
+        margin-top: 8px;
+      }
+
+      .progress-wrap {
+        background: #eee;
+        border-radius: 999px;
+        overflow: hidden;
+        height: 18px;
+        margin-top: 12px;
+      }
+
+      .progress-bar {
+        width: 0%;
+        height: 100%;
+        background: var(--accent);
+        transition: width 0.3s ease;
+      }
+
+      .badges {
+        display: grid;
+        grid-template-columns: repeat(6, 1fr);
+        gap: 12px;
+        margin-bottom: 20px;
+      }
+
+      .badge {
+        text-align: center;
+        opacity: 0.35;
+        transition: 0.3s;
+      }
+
+      .badge.unlocked {
+        opacity: 1;
+        border-color: var(--gold);
+        background: #fff9e8;
+        transform: translateY(-2px);
+      }
+
+      .badge-icon {
+        font-size: 2rem;
+        margin-bottom: 6px;
+      }
+
+      .chart-card {
+        margin-bottom: 20px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: var(--card);
+        border-radius: 18px;
+        overflow: hidden;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.06);
+      }
+
+      th,
+      td {
+        padding: 12px;
+        border-bottom: 1px solid var(--border);
+        text-align: center;
+      }
+
+      th {
+        background: var(--accent);
+        color: white;
+      }
+
+      tr.completed {
+        background: #eefaf2;
+      }
+
+      input[type="number"] {
+        width: 90px;
+        padding: 8px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      input[type="text"] {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+      }
+
+      button {
+        border: none;
+        background: var(--accent);
+        color: white;
+        padding: 12px 18px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-weight: bold;
+        margin: 14px 8px 0 0;
+      }
+
+      button:hover {
+        background: var(--accent-dark);
+      }
+
+      .danger {
+        background: #d9534f;
+      }
+
+      .danger:hover {
+        background: #b9403c;
+      }
+
+      .footer-note {
+        color: var(--muted);
+        font-size: 0.9rem;
+        margin-top: 10px;
+      }
+
+      @media (max-width: 850px) {
+        .grid,
+        .badges {
+          grid-template-columns: repeat(2, 1fr);
+        }
+
+        body {
+          padding: 12px;
+        }
+
+        table {
+          font-size: 0.85rem;
+        }
+
+        th,
+        td {
+          padding: 8px;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <header>
+        <h1>30-Day Jumping Jacks Challenge</h1>
+        <p class="subtitle">
+          Track your reps, build your streak, and unlock milestone badges.
+        </p>
+      </header>
+
+      <section class="grid">
+        <div class="card">
+          <strong>Days Completed</strong>
+          <div class="stat" id="daysCompleted">0/30</div>
+        </div>
+        <div class="card">
+          <strong>Total Reps</strong>
+          <div class="stat" id="totalReps">0</div>
+        </div>
+        <div class="card">
+          <strong>Current Streak</strong>
+          <div class="stat" id="currentStreak">0 days</div>
+        </div>
+        <div class="card">
+          <strong>Progress</strong>
+          <div class="stat" id="progressPercent">0%</div>
+          <div class="progress-wrap">
+            <div class="progress-bar" id="progressBar"></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="badges">
+        <div class="card badge" id="badge7">
+          <div class="badge-icon">🌱</div>
+          <strong>7 Days</strong><br />Starter
+        </div>
+        <div class="card badge" id="badge14">
+          <div class="badge-icon">🔥</div>
+          <strong>14 Days</strong><br />Consistent
+        </div>
+        <div class="card badge" id="badge21">
+          <div class="badge-icon">💪</div>
+          <strong>21 Days</strong><br />Disciplined
+        </div>
+        <div class="card badge" id="badge30">
+          <div class="badge-icon">🏆</div>
+          <strong>30 Days</strong><br />Champion
+        </div>
+        <div class="card badge" id="badge25">
+          <div class="badge-icon">⭐</div>
+          <strong>25+ Days</strong><br />Super Streak
+        </div>
+        <div class="card badge" id="badge5000">
+          <div class="badge-icon">🚀</div>
+          <strong>2,320 Reps</strong><br />Power Jumper
+        </div>
+      </section>
+
+      <section class="card chart-card">
+        <canvas id="progressChart" height="90"></canvas>
+      </section>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Day</th>
+            <th>Target Reps</th>
+            <th>Completed Reps</th>
+            <th>Done?</th>
+            <th>Notes</th>
+          </tr>
+        </thead>
+        <tbody id="trackerBody"></tbody>
+      </table>
+
+      <button onclick="saveData()">Save Progress</button>
+      <button onclick="downloadCSV()">Download Record</button>
+      <button class="danger" onclick="resetData()">Reset Challenge</button>
+
+      <p class="footer-note">
+        Your progress is saved in this browser using localStorage.
+      </p>
+    </div>
+
+    <script>
+      const STORAGE_KEY = "jumpingJacks30DayChallenge";
+      const targets = [
+        ...Array(7).fill(60), // Days 1–7
+        ...Array(7).fill(70), // Days 8–14
+        ...Array(7).fill(80), // Days 15–21
+        ...Array(7).fill(90), // Days 22–28
+        100, // Day 29
+        120, // Day 30
+      ];
+      let chart;
+
+      function getDefaultData() {
+        return targets.map((target, index) => ({
+          day: index + 1,
+          target,
+          reps: "",
+          done: false,
+          notes: "",
+        }));
+      }
+
+      function loadData() {
+        const saved = localStorage.getItem(STORAGE_KEY);
+        return saved ? JSON.parse(saved) : getDefaultData();
+      }
+
+      function saveData() {
+        const data = collectData();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        updateDashboard(data);
+        alert("Progress saved!");
+      }
+
+      function collectData() {
+        return targets.map((target, index) => {
+          const day = index + 1;
+          return {
+            day,
+            target,
+            reps: document.getElementById(`reps-${day}`).value,
+            done: document.getElementById(`done-${day}`).checked,
+            notes: document.getElementById(`notes-${day}`).value,
+          };
+        });
+      }
+
+      function renderTable(data) {
+        const body = document.getElementById("trackerBody");
+        body.innerHTML = "";
+
+        data.forEach((row) => {
+          const tr = document.createElement("tr");
+          if (row.done) tr.classList.add("completed");
+
+          tr.innerHTML = `
+          <td>${row.day}</td>
+          <td>${row.target}</td>
+          <td><input type="number" min="0" id="reps-${row.day}" value="${row.reps}" /></td>
+          <td><input type="checkbox" id="done-${row.day}" ${row.done ? "checked" : ""} /></td>
+          <td><input type="text" id="notes-${row.day}" value="${row.notes || ""}" placeholder="How did it feel?" /></td>
+        `;
+
+          body.appendChild(tr);
+
+          tr.querySelectorAll("input").forEach((input) => {
+            input.addEventListener("input", () => autoSave(row.day));
+            input.addEventListener("change", () => autoSave(row.day));
+          });
+        });
+      }
+
+      function autoSave(day) {
+        const data = collectData();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        updateDashboard(data);
+        const row = document.getElementById(`done-${day}`).closest("tr");
+        row.classList.toggle(
+          "completed",
+          document.getElementById(`done-${day}`).checked,
+        );
+      }
+
+      function calculateCurrentStreak(data) {
+        let streak = 0;
+        for (const row of data) {
+          if (row.done) streak++;
+          else break;
+        }
+        return streak;
+      }
+
+      function updateDashboard(data) {
+        const completedDays = data.filter((row) => row.done).length;
+        const totalReps = data.reduce(
+          (sum, row) => sum + (Number(row.reps) || 0),
+          0,
+        );
+        const progress = Math.round((completedDays / 30) * 100);
+        const streak = calculateCurrentStreak(data);
+
+        document.getElementById("daysCompleted").textContent =
+          `${completedDays}/30`;
+        document.getElementById("totalReps").textContent =
+          totalReps.toLocaleString();
+        document.getElementById("currentStreak").textContent = `${streak} days`;
+        document.getElementById("progressPercent").textContent = `${progress}%`;
+        document.getElementById("progressBar").style.width = `${progress}%`;
+
+        setBadge("badge7", completedDays >= 7);
+        setBadge("badge14", completedDays >= 14);
+        setBadge("badge21", completedDays >= 21);
+        setBadge("badge30", completedDays >= 30);
+        setBadge("badge25", completedDays >= 25);
+        setBadge("badgeTotal", totalReps >= 2500);
+
+        updateChart(data);
+      }
+
+      function setBadge(id, unlocked) {
+        document.getElementById(id).classList.toggle("unlocked", unlocked);
+      }
+
+      function updateChart(data) {
+        const labels = data.map((row) => `Day ${row.day}`);
+        const targetData = data.map((row) => row.target);
+        const completedData = data.map((row) => Number(row.reps) || 0);
+
+        if (chart) {
+          chart.data.labels = labels;
+          chart.data.datasets[0].data = targetData;
+          chart.data.datasets[1].data = completedData;
+          chart.update();
+          return;
+        }
+
+        const ctx = document.getElementById("progressChart");
+        chart = new Chart(ctx, {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Target Reps",
+                data: targetData,
+                borderWidth: 2,
+                tension: 0.3,
+              },
+              {
+                label: "Completed Reps",
+                data: completedData,
+                borderWidth: 2,
+                tension: 0.3,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            plugins: {
+              title: {
+                display: true,
+                text: "Target Reps vs Completed Reps",
+              },
+            },
+            scales: {
+              y: {
+                beginAtZero: true,
+              },
+            },
+          },
+        });
+      }
+
+      function downloadCSV() {
+        const data = collectData();
+        const rows = [
+          ["Day", "Target Reps", "Completed Reps", "Completed", "Notes"],
+          ...data.map((row) => [
+            row.day,
+            row.target,
+            row.reps,
+            row.done ? "Yes" : "No",
+            row.notes,
+          ]),
+        ];
+
+        const csv = rows
+          .map((row) =>
+            row
+              .map((value) => `"${String(value).replaceAll('"', '""')}"`)
+              .join(","),
+          )
+          .join("\n");
+        const blob = new Blob([csv], { type: "text/csv" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "jumping-jacks-challenge-record.csv";
+        a.click();
+
+        URL.revokeObjectURL(url);
+      }
+
+      function resetData() {
+        if (!confirm("Are you sure you want to reset the challenge?")) return;
+        localStorage.removeItem(STORAGE_KEY);
+        const freshData = getDefaultData();
+        renderTable(freshData);
+        updateDashboard(freshData);
+      }
+
+      const initialData = loadData();
+      renderTable(initialData);
+      updateDashboard(initialData);
+    </script>
+  </body>
+</html>
