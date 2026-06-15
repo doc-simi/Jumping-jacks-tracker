@@ -4,7 +4,6 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>30-Day Jumping Jacks Challenge</title>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
       :root {
         --card: #ffffff;
@@ -14,6 +13,7 @@
         --accent-dark: #e85f3e;
         --gold: #f4b400;
         --border: #e4ded6;
+        --blue: #4b7bec;
       }
 
       * {
@@ -114,6 +114,48 @@
         margin-bottom: 20px;
       }
 
+      .chart-header {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+        margin-bottom: 12px;
+      }
+
+      .legend {
+        display: flex;
+        gap: 14px;
+        color: var(--muted);
+        font-size: 0.9rem;
+      }
+
+      .legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+
+      .dot {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+
+      .dot.target {
+        background: var(--blue);
+      }
+      .dot.completed {
+        background: var(--accent);
+      }
+
+      canvas {
+        width: 100%;
+        height: 320px;
+        display: block;
+      }
+
       table {
         width: 100%;
         border-collapse: collapse;
@@ -172,7 +214,6 @@
       .danger {
         background: #d9534f;
       }
-
       .danger:hover {
         background: #b9403c;
       }
@@ -192,18 +233,20 @@
         body {
           padding: 12px;
         }
-
         table {
           font-size: 0.85rem;
         }
-
         th,
         td {
           padding: 8px;
         }
+        canvas {
+          height: 260px;
+        }
       }
     </style>
   </head>
+
   <body>
     <div class="container">
       <header>
@@ -240,30 +283,42 @@
           <div class="badge-icon">🌱</div>
           <strong>7 Days</strong><br />Starter
         </div>
+
         <div class="card badge" id="badge14">
           <div class="badge-icon">🔥</div>
           <strong>14 Days</strong><br />Consistent
         </div>
+
         <div class="card badge" id="badge21">
           <div class="badge-icon">💪</div>
           <strong>21 Days</strong><br />Disciplined
         </div>
+
         <div class="card badge" id="badge30">
           <div class="badge-icon">🏆</div>
           <strong>30 Days</strong><br />Champion
         </div>
+
         <div class="card badge" id="badge25">
           <div class="badge-icon">⭐</div>
           <strong>25+ Days</strong><br />Super Streak
         </div>
-        <div class="card badge" id="badge5000">
+
+        <div class="card badge" id="badge2320">
           <div class="badge-icon">🚀</div>
           <strong>2,320 Reps</strong><br />Power Jumper
         </div>
       </section>
 
       <section class="card chart-card">
-        <canvas id="progressChart" height="90"></canvas>
+        <div class="chart-header">
+          <strong>Target Reps vs Completed Reps</strong>
+          <div class="legend">
+            <span><i class="dot target"></i> Target reps</span>
+            <span><i class="dot completed"></i> Completed reps</span>
+          </div>
+        </div>
+        <canvas id="progressChart"></canvas>
       </section>
 
       <table>
@@ -279,31 +334,36 @@
         <tbody id="trackerBody"></tbody>
       </table>
 
-      <button onclick="saveData()">Save Progress</button>
-      <button onclick="downloadCSV()">Download Record</button>
-      <button class="danger" onclick="resetData()">Reset Challenge</button>
+      <button type="button" onclick="saveData()">Save Progress</button>
+      <button type="button" onclick="downloadCSV()">Download Record</button>
+      <button type="button" class="danger" onclick="resetData()">
+        Reset Challenge
+      </button>
 
       <p class="footer-note">
-        Your progress is saved in this browser using localStorage.
+        Your progress is saved in this browser using localStorage. This version
+        uses a built-in canvas chart, so no external chart library is needed.
       </p>
     </div>
 
     <script>
-      const STORAGE_KEY = "jumpingJacks30DayChallenge";
+      const STORAGE_KEY = "jumpingJacks30DayChallenge_v2320";
+
+      // Total = 2,320 reps
+      // Days 1-7: 60, Days 8-14: 70, Days 15-21: 80, Days 22-28: 90, Day 29: 100, Day 30: 120
       const targets = [
-        ...Array(7).fill(60), // Days 1–7
-        ...Array(7).fill(70), // Days 8–14
-        ...Array(7).fill(80), // Days 15–21
-        ...Array(7).fill(90), // Days 22–28
-        100, // Day 29
-        120, // Day 30
+        ...Array(7).fill(60),
+        ...Array(7).fill(70),
+        ...Array(7).fill(80),
+        ...Array(7).fill(90),
+        100,
+        120,
       ];
-      let chart;
 
       function getDefaultData() {
         return targets.map((target, index) => ({
           day: index + 1,
-          target,
+          target: target,
           reps: "",
           done: false,
           notes: "",
@@ -312,25 +372,40 @@
 
       function loadData() {
         const saved = localStorage.getItem(STORAGE_KEY);
-        return saved ? JSON.parse(saved) : getDefaultData();
-      }
 
-      function saveData() {
-        const data = collectData();
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-        updateDashboard(data);
-        alert("Progress saved!");
+        if (!saved) {
+          return getDefaultData();
+        }
+
+        try {
+          const parsed = JSON.parse(saved);
+
+          if (!Array.isArray(parsed) || parsed.length !== 30) {
+            return getDefaultData();
+          }
+
+          return parsed.map((row, index) => ({
+            day: index + 1,
+            target: targets[index],
+            reps: row.reps || "",
+            done: Boolean(row.done),
+            notes: row.notes || "",
+          }));
+        } catch (error) {
+          return getDefaultData();
+        }
       }
 
       function collectData() {
         return targets.map((target, index) => {
           const day = index + 1;
+
           return {
-            day,
-            target,
-            reps: document.getElementById(`reps-${day}`).value,
-            done: document.getElementById(`done-${day}`).checked,
-            notes: document.getElementById(`notes-${day}`).value,
+            day: day,
+            target: target,
+            reps: document.getElementById("reps-" + day).value,
+            done: document.getElementById("done-" + day).checked,
+            notes: document.getElementById("notes-" + day).value,
           };
         });
       }
@@ -341,14 +416,17 @@
 
         data.forEach((row) => {
           const tr = document.createElement("tr");
-          if (row.done) tr.classList.add("completed");
+
+          if (row.done) {
+            tr.classList.add("completed");
+          }
 
           tr.innerHTML = `
           <td>${row.day}</td>
           <td>${row.target}</td>
-          <td><input type="number" min="0" id="reps-${row.day}" value="${row.reps}" /></td>
-          <td><input type="checkbox" id="done-${row.day}" ${row.done ? "checked" : ""} /></td>
-          <td><input type="text" id="notes-${row.day}" value="${row.notes || ""}" placeholder="How did it feel?" /></td>
+          <td><input type="number" min="0" id="reps-${row.day}" value="${row.reps}"></td>
+          <td><input type="checkbox" id="done-${row.day}" ${row.done ? "checked" : ""}></td>
+          <td><input type="text" id="notes-${row.day}" value="${escapeHtml(row.notes)}" placeholder="How did it feel?"></td>
         `;
 
           body.appendChild(tr);
@@ -360,23 +438,45 @@
         });
       }
 
+      function escapeHtml(value) {
+        return String(value || "")
+          .replaceAll("&", "&amp;")
+          .replaceAll("<", "&lt;")
+          .replaceAll(">", "&gt;")
+          .replaceAll('"', "&quot;")
+          .replaceAll("'", "&#039;");
+      }
+
       function autoSave(day) {
         const data = collectData();
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         updateDashboard(data);
-        const row = document.getElementById(`done-${day}`).closest("tr");
+
+        const row = document.getElementById("done-" + day).closest("tr");
         row.classList.toggle(
           "completed",
-          document.getElementById(`done-${day}`).checked,
+          document.getElementById("done-" + day).checked,
         );
+      }
+
+      function saveData() {
+        const data = collectData();
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        updateDashboard(data);
+        alert("Progress saved!");
       }
 
       function calculateCurrentStreak(data) {
         let streak = 0;
+
         for (const row of data) {
-          if (row.done) streak++;
-          else break;
+          if (row.done) {
+            streak += 1;
+          } else {
+            break;
+          }
         }
+
         return streak;
       }
 
@@ -390,79 +490,123 @@
         const streak = calculateCurrentStreak(data);
 
         document.getElementById("daysCompleted").textContent =
-          `${completedDays}/30`;
+          completedDays + "/30";
         document.getElementById("totalReps").textContent =
           totalReps.toLocaleString();
-        document.getElementById("currentStreak").textContent = `${streak} days`;
-        document.getElementById("progressPercent").textContent = `${progress}%`;
-        document.getElementById("progressBar").style.width = `${progress}%`;
+        document.getElementById("currentStreak").textContent = streak + " days";
+        document.getElementById("progressPercent").textContent = progress + "%";
+        document.getElementById("progressBar").style.width = progress + "%";
 
         setBadge("badge7", completedDays >= 7);
         setBadge("badge14", completedDays >= 14);
         setBadge("badge21", completedDays >= 21);
         setBadge("badge30", completedDays >= 30);
         setBadge("badge25", completedDays >= 25);
-        setBadge("badgeTotal", totalReps >= 2500);
+        setBadge("badge2320", totalReps >= 2320);
 
-        updateChart(data);
+        drawChart(data);
       }
 
       function setBadge(id, unlocked) {
-        document.getElementById(id).classList.toggle("unlocked", unlocked);
-      }
+        const badge = document.getElementById(id);
 
-      function updateChart(data) {
-        const labels = data.map((row) => `Day ${row.day}`);
-        const targetData = data.map((row) => row.target);
-        const completedData = data.map((row) => Number(row.reps) || 0);
-
-        if (chart) {
-          chart.data.labels = labels;
-          chart.data.datasets[0].data = targetData;
-          chart.data.datasets[1].data = completedData;
-          chart.update();
+        if (!badge) {
           return;
         }
 
-        const ctx = document.getElementById("progressChart");
-        chart = new Chart(ctx, {
-          type: "line",
-          data: {
-            labels,
-            datasets: [
-              {
-                label: "Target Reps",
-                data: targetData,
-                borderWidth: 2,
-                tension: 0.3,
-              },
-              {
-                label: "Completed Reps",
-                data: completedData,
-                borderWidth: 2,
-                tension: 0.3,
-              },
-            ],
-          },
-          options: {
-            responsive: true,
-            plugins: {
-              title: {
-                display: true,
-                text: "Target Reps vs Completed Reps",
-              },
-            },
-            scales: {
-              y: {
-                beginAtZero: true,
-              },
-            },
-          },
-        });
+        badge.classList.toggle("unlocked", unlocked);
+      }
+
+      function drawChart(data) {
+        const canvas = document.getElementById("progressChart");
+        const ctx = canvas.getContext("2d");
+
+        const displayWidth = canvas.clientWidth;
+        const displayHeight = canvas.clientHeight;
+        const pixelRatio = window.devicePixelRatio || 1;
+
+        canvas.width = displayWidth * pixelRatio;
+        canvas.height = displayHeight * pixelRatio;
+
+        ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+        ctx.clearRect(0, 0, displayWidth, displayHeight);
+
+        const padding = { top: 20, right: 20, bottom: 42, left: 45 };
+        const chartWidth = displayWidth - padding.left - padding.right;
+        const chartHeight = displayHeight - padding.top - padding.bottom;
+
+        const targetData = data.map((row) => Number(row.target) || 0);
+        const completedData = data.map((row) => Number(row.reps) || 0);
+        const maxValue = Math.max(120, ...targetData, ...completedData);
+        const yMax = Math.ceil(maxValue / 20) * 20;
+
+        ctx.font = "12px Arial";
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "#e4ded6";
+        ctx.fillStyle = "#666";
+
+        for (let i = 0; i <= 5; i++) {
+          const value = (yMax / 5) * i;
+          const y = padding.top + chartHeight - (value / yMax) * chartHeight;
+
+          ctx.beginPath();
+          ctx.moveTo(padding.left, y);
+          ctx.lineTo(padding.left + chartWidth, y);
+          ctx.stroke();
+
+          ctx.fillText(Math.round(value), 8, y + 4);
+        }
+
+        function getPoint(index, value) {
+          const x = padding.left + (index / 29) * chartWidth;
+          const y = padding.top + chartHeight - (value / yMax) * chartHeight;
+          return { x, y };
+        }
+
+        function drawLine(values, color) {
+          ctx.strokeStyle = color;
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+
+          values.forEach((value, index) => {
+            const point = getPoint(index, value);
+
+            if (index === 0) {
+              ctx.moveTo(point.x, point.y);
+            } else {
+              ctx.lineTo(point.x, point.y);
+            }
+          });
+
+          ctx.stroke();
+
+          values.forEach((value, index) => {
+            const point = getPoint(index, value);
+            ctx.fillStyle = color;
+            ctx.beginPath();
+            ctx.arc(point.x, point.y, 3, 0, Math.PI * 2);
+            ctx.fill();
+          });
+        }
+
+        drawLine(targetData, "#4b7bec");
+        drawLine(completedData, "#ff7a59");
+
+        ctx.fillStyle = "#666";
+        ctx.font = "11px Arial";
+
+        for (let i = 0; i < 30; i += 4) {
+          const point = getPoint(i, 0);
+          ctx.fillText("D" + (i + 1), point.x - 8, displayHeight - 16);
+        }
+
+        const lastPoint = getPoint(29, 0);
+        ctx.fillText("D30", lastPoint.x - 12, displayHeight - 16);
       }
 
       function downloadCSV() {
         const data = collectData();
+
         const rows = [
           ["Day", "Target Reps", "Completed Reps", "Completed", "Notes"],
           ...data.map((row) => [
@@ -481,6 +625,7 @@
               .join(","),
           )
           .join("\n");
+
         const blob = new Blob([csv], { type: "text/csv" });
         const url = URL.createObjectURL(blob);
 
@@ -493,12 +638,19 @@
       }
 
       function resetData() {
-        if (!confirm("Are you sure you want to reset the challenge?")) return;
+        if (!confirm("Are you sure you want to reset the challenge?")) {
+          return;
+        }
+
         localStorage.removeItem(STORAGE_KEY);
         const freshData = getDefaultData();
         renderTable(freshData);
         updateDashboard(freshData);
       }
+
+      window.addEventListener("resize", () => {
+        drawChart(collectData());
+      });
 
       const initialData = loadData();
       renderTable(initialData);
